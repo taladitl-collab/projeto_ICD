@@ -1,0 +1,167 @@
+---
+title: "Relatório de Introdução à Ciência de Dados"
+subtitle: |
+  Universidade Federal de Pernambuco - 
+  Centro de Ciências Exatas e da Natureza -  
+  Departamento de Estatística
+author: "Taladi Lankoande"
+date: "2026-11-20"
+lang: pt
+format:
+  pdf:
+    geometry: margin=1.5cm
+    fontsize: 10pt
+toc: true
+toc-depth: 2
+engine: markdown
+execute:
+  eval: false
+  warning: false
+---
+
+# Introdução
+
+As mudanças climáticas estão entre os principais desafios ambientais da atualidade. Segundo o Painel Intergovernamental sobre Mudanças Climáticas (IPCC, 2023), as atividades humanas impulsionam o aquecimento global principalmente pela emissão de gases de efeito estufa. Este estudo analisa a relação entre a anomalia da temperatura média global (`Temp`) e fatores antrópicos (dióxido de carbono ($\text{CO}_2$), metano ($\text{CH}_4$), óxido nitroso ($\text{N}_2\text{O}$) e clorofluorcarbonetos ($\text{CFC-11}$ e $\text{CFC-12}$))e naturais (irradiância solar total (`TSI`), aerossóis estratosféricos (`Aerosols`) e o índice oceano-atmosfera `MEI` (*Multivariate ENSO Index*)), por meio de técnicas estatísticas e de Aprendizado de Máquina (James et al., 2021).
+
+# Metodologia
+
+- **Base de dados e análise exploratória:** A base reúne 308 observações mensais (maio de 1983 a dezembro de 2008) e 11 variáveis, sem valores ausentes ou duplicados, provenientes da NOAA, NASA, Universidade de East Anglia e do projeto SOLARIS-HEPPA. A variável-resposta é `Temp` (em °C) e os preditores são `MEI`, `CO2`, `CH4`, `N2O`, `CFC-11`, `CFC-12`, `TSI` e `Aerosols`. `Year` e `Month` foram excluídas da modelagem. As estatísticas descritivas (média, mediana, desvio-padrão, mínimo, máximo,  amplitude interquartil e coeficiente de assimetria) e a matriz de correlação de Pearson foram calculadas na linguagem R
+
+- **Modelagem preditiva:** A modelagem foi conduzida em Python (biblioteca PyCaret) com partição aleatória de 80% para treino (246 observações) e 20% para teste (62 observações), semente fixada em 10 e validação cruzada em 10 partições (*10-fold*). A normalização foi dispensada por se tratarem de modelos baseados em árvores e ajustou-se dois algoritmos com profundidade máxima igual a 3 e mínimo de 2 observações por divisão para conter o sobreajuste e garantir comparabilidade.
+
+  - **Árvore de Regressão:** Método supervisionado que particiona recursivamente o espaço dos preditores em nós disjuntos e atribui a cada folha a média dos valores observados (Breiman et al., 1984).
+  - ***Random Forest*****:** Método *ensemble* que agrega múltiplas árvores treinadas em amostras *bootstrap* e subconjuntos aleatórios de preditores para reduzir a variância e elevar a precisão (Breiman, 2001; James et al., 2021).
+
+- **Métricas de avaliação:** O desempenho dos modelos foi avaliado pelo Erro Quadrático Médio ($\text{MSE}$), Raiz do Erro Quadrático Médio ($\text{RMSE}$), Erro Absoluto Médio ($\text{MAE}$) e Coeficiente de Determinação ($R^2$) em que; $y_i$ é o valor observado, $\hat{y}_i$ o previsto, $\bar{y}$ a média observada e $n$ o total de observações:
+
+$$\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \qquad \text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$$
+
+$$\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i| \qquad R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}$$
+
+# Resultados
+
+## Análise exploratória dos dados
+
+::: {#tbl-descritivas}
+| Variável | Média | Mediana | Desvio-padrão | Mínimo | Máximo | Amplitude interquartil | Coeficiente de assimetria |
+|:---------|------:|--------:|--------------:|-------:|-------:|-----------------------:|--------------------------:|
+| MEI | 0,276 | 0,238 | 0,938 | -1,640 | 3,000 | 1,230 | 0,122 |
+| CO2 | 363,0 | 362,0 | 12,6 | 340,0 | 388,0 | 20,4 | 0,238 |
+| CH4 | 1.750,0 | 1.764,0 | 46,1 | 1.630,0 | 1.814,0 | 64,7 | -0,911 |
+| N2O | 312,0 | 312,0 | 5,22 | 304,0 | 322,0 | 8,87 | 0,000 |
+| CFC-11 | 252,0 | 258,0 | 20,2 | 191,0 | 271,0 | 20,7 | -0,891 |
+| CFC-12 | 498,0 | 528,0 | 57,8 | 350,0 | 544,0 | 68,1 | -1,557 |
+| TSI | 1.366,0 | 1.366,0 | 0,40 | 1.365,0 | 1.367,0 | 0,646 | 0,000 |
+| Aerosols | 0,017 | 0,006 | 0,029 | 0,002 | 0,149 | 0,010 | 1,138 |
+| Temp | 0,257 | 0,248 | 0,179 | -0,282 | 0,739 | 0,286 | 0,151 |
+
+Estatísticas descritivas das variáveis climáticas (1983–2008)
+:::
+
+*Fonte:a autora.*
+
+Na @tbl-descritivas, `Temp` apresenta uma distribuição aproximadamente simétrica com média de $0,257\text{ °C}$ e mediana de $0,248\text{ °C}$). Entre os gases, `CO2` e `N2O` são simétricos, enquanto `CH4`, `CFC-11` e `CFC-12` apresentam assimetria à esquerda, com maior dispersão observada no `CFC-12`. Nos fatores naturais, a baixa variabilidade de `TSI` contrasta com as oscilações de `MEI` e a forte assimetria à direita de `Aerosols`.
+
+::: {#fig-correlacao}
+![](images/matriz%20de%20correlação.png "Matriz de correlação de Pearson"){fig-align="center" width="50%"}
+
+Matriz de correlação de Pearson entre as variáveis climáticas
+:::
+
+Na @fig-correlacao, `Temp` apresenta correlacão positiva com `CO2` ($r = 0,75$), `N2O` ($r = 0,74$), `CH4` ($r = 0,70$) e `CFC-12` ($r = 0,69$), negativa com `Aerosols` ($r = -0,39$) e fracamente com `MEI` e `TSI`. Observa-se elevada multicolinearidade entre os gases, atingindo $r = 0,98$ (`CO2` e `N2O`) e $r = 0,96$ (`CH4` e `CFC-12`), cenário adequado a modelos baseados em árvores por dispensarem normalização e tolerarem preditores colineares.
+
+## Árvore de Regressão
+
+::: {#tbl-dt-desempenho}
+| Métrica       | Treino (*CV 10-fold*) |  Teste   |
+|:--------------|:---------------------:|:--------:|
+| $\text{MSE}$  |  $0,0095 \pm 0,0025$  | $0,0073$ |
+| $\text{RMSE}$ |  $0,0965 \pm 0,0131$  | $0,0857$ |
+| $\text{MAE}$  |  $0,0754 \pm 0,0085$  | $0,0672$ |
+| $R^2$         |  $0,7006 \pm 0,0982$  | $0,7147$ |
+
+Desempenho da Árvore de Regressão na validação cruzada (*10-fold*) e no conjunto de teste
+:::
+
+*Fonte:a autora.*
+
+O modelo apresentou desempenho consistente entre a validação cruzada (*10-fold*) e o conjunto de teste (@tbl-dt-desempenho), explicando $71,47\%$ da variabilidade de `Temp` fora da amostra ($R^2 = 0,7147$). Os erros obtidos no teste ($\text{RMSE} = 0,0857\text{ °C}$ e $\text{MAE} = 0,0672\text{ °C}$) ficaram bem abaixo do desvio-padrão original da série ($0,179\text{ °C}$) e pouco menores que os valores médios da validação cruzada. Esse resultado indica boa capacidade de generalização, favorecida pela restrição de profundidade (`max_depth=3`), que impediu a árvore de se ajustar a ruídos específicos do treino e preservou apenas as divisões mais relevantes para explicar a anomalia térmica.
+
+::: {#fig-arvore-dt}
+![](images/arvore_dt.png "Árvore de decisão"){fig-align="center" width="50%"}
+
+Estrutura da Árvore de Regressão ajustada ao conjunto de treino (`max_depth=3`)
+:::
+
+*Fonte:a autora.*
+
+Na @fig-arvore-dt, `CFC-12` domina a partição desde a raiz ($\le 532,514\text{ ppbv}$), absorvendo o efeito dos demais gases colineares (`CO2`, `CH4` e `CFC-11`, ausentes nos cortes). Nos níveis inferiores, `MEI`, `Aerosols` e `N2O` refinam as oito folhas terminais, capturando o aquecimento sob `MEI` positivo ($> -0,228$) e o resfriamento sob maior concentração de `Aerosols` ($> 0,024$).
+
+## Random Forest
+
+::: {#tbl-rf-desempenho}
+| Métrica       | Treino (*CV 10-fold*) |  Teste   |
+|:--------------|:---------------------:|:--------:|
+| $\text{MSE}$  |  $0,0085 \pm 0,0018$  | $0,0070$ |
+| $\text{RMSE}$ |  $0,0915 \pm 0,0096$  | $0,0837$ |
+| $\text{MAE}$  |  $0,0703 \pm 0,0057$  | $0,0653$ |
+| $R^2$         |  $0,7309 \pm 0,0856$  | $0,7275$ |
+
+Desempenho do *Random Forest* na validação cruzada (*10-fold*) e no conjunto de teste
+:::
+
+*Fonte:a autora.*
+
+O *Random Forest* manteve desempenho estável entre treino e teste (@tbl-rf-desempenho), explicando $72,75\%$ da variabilidade de `Temp` na amostra de teste ($R^2 = 0,7275$) e reduzindo o erro para $\text{RMSE} = 0,0837$, sem indícios de sobreajuste.
+
+::: {#fig-rf-variaveis}
+![](images/Feature%20Importance.png "Gráfico de importância das variáveis do Random Forest"){fig-align="center" width="55%"}
+
+Importância das variáveis climáticas no *Random Forest*
+:::
+
+Conforme ilustrado na @fig-rf-variaveis, o CFC-12 concentra aproximadamente $89\%$ da importância do modelo, seguido por `MEI` ($\approx 6\%$), `Aerosols` ($\approx 3\%$), `TSI` ($\approx 1\%$) e `N2O` ($\approx 1\%$), enquanto `CO2`, `CFC-11` e `CH4` registram valores próximos de zero. Esse predomínio decorre da forte multicolinearidade entre os gases de efeito estufa e da restrição de profundidade (`max_depth=3`),adotada para assegurar uma comparação equitativa, fazendo com que `CFC-12` absorva quase toda a variância compartilhada nas divisões superiores das árvores de decisão.
+
+## Comparação entre os modelos
+
+A @fig-reais-previstos confronta os valores reais e previstos no conjunto de teste. Com `max_depth=3`, a Árvore de Regressão (a) limita-se a oito patamares discretos (alinhamentos horizontais), enquanto o *Random Forest* (b) suaviza esses degraus pela média das árvores *bootstrap*, aproximando os pontos da reta $y = \hat{y}$ e reduzindo a dispersão nos extremos.
+
+Comparando a @tbl-dt-desempenho e a @tbl-rf-desempenho, o *Random Forest* obteve melhor ajuste e maior estabilidade. No conjunto de teste, o $R^2$ subiu de $71,47\%$ para $72,75\%$, enquanto o $\text{RMSE}$ caiu de $0,0857$ para $0,0837$ e o $\text{MAE}$ diminuiu de $0,0672$ para $0,0653$. Na validação cruzada (*10-fold*), o modelo também oscilou menos entre as partições: o desvio-padrão do $R^2$ recuou de $\pm 0,0982$ para $\pm 0,0856$ e o do $\text{RMSE}$ passou de $\pm 0,0131$ para $\pm 0,0096$, indicando menor variância das previsões.
+
+Cada modelo apresenta uma vantagem prática distinta. A árvore individual permite acompanhar as regras de decisão, partindo do corte principal em $\text{CFC-12} \le 532,514\text{ ppbv}$, enquanto o *Random Forest* perde essa leitura única, mas apresenta estimativas mais contínuas e precisas. Apesar dessa diferença , ambos apontam para o mesmo comportamento climático na predição da anomalia de temperatura (`Temp`): `CFC-12` concentra a tendência de aquecimento dos gases de efeito estufa (pela alta correlação com `CO2`, `N2O` e `CH4`), ao passo que `MEI`, `Aerosols` e `N2O` explicam as variações de curto prazo.
+
+:::: {#fig-reais-previstos fig-pos="H"}
+::: {}
+```{=latex}
+\begin{center}
+\begin{tabular}{@{}c@{\hspace{0.04\textwidth}}c@{}}
+\includegraphics[width=0.44\textwidth]{images/arvrevr_vp_dt-01.png} &
+\includegraphics[width=0.44\textwidth]{images/vr_vp_dt(1).png} \\
+\small (a) Árvore de Regressão & \small (b) \textit{Random Forest}
+\end{tabular}
+\end{center}
+```
+:::
+::::
+
+*Fonte:a autora*
+
+# Conclusão
+
+Os resultados obtidos confirmam o comportamento esperado tanto sob a ótica climática quanto estatística. Os modelos baseados em árvores mostraram-se eficazes na predição da anomalia da temperatura média global (`Temp`) entre 1983 e 2008, apresentando boa generalização entre treino e teste. Conforme previsto pela literatura, os gases de efeito estufa, sintetizados sobretudo por `CFC-12` em razão da elevada colinearidade com `CO2`, `N2O` e `CH4`, determinaram a tendência de aquecimento, enquanto fatores naturais como `MEI` e `Aerosols` explicaram as oscilações térmicas de curto prazo.
+
+Sob a restrição `max_depth=3`, o *Random Forest* superou a Árvore de Regressão em todas as métricas avaliadas ($R^2 = 72,75\%$ e $\text{RMSE} = 0,0837$ contra $R^2 = 71,47\%$ e $\text{RMSE} = 0,0857$) e reduziu a discretização das previsões, corroborando o ganho de estabilidade esperado de métodos *ensemble*, ao passo que a árvore individual manteve a interpretabilidade direta das regras de corte.
+
+# Contribuições da equipe
+
+- **Taladi Lankoande (100%):** Elaboração integral do estudo.
+
+# Referências
+
+BREIMAN, L. Random Forests. **Machine Learning**, v. 45, n. 1, p. 5-32, 2001.
+
+BREIMAN, L. et al. **Classification and Regression Trees**. Belmont: Wadsworth International Group, 1984.
+
+IPCC. **Climate Change 2023**: Synthesis Report. Contribution of Working Groups I, II and III to the Sixth Assessment Report of the Intergovernmental Panel on Climate Change. Geneva: IPCC, 2023. Disponível em: ipcc.ch. Acesso em: 10 nov. 2026.
+
+JAMES, G. et al. **An Introduction to Statistical Learning**: with Applications in R. 2. ed. New York: Springer, 2021.
